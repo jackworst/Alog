@@ -1,0 +1,108 @@
+/* alog.css */
+
+/* general */
+
+body {
+    font-family: sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid grey;
+    padding: 2px 5px;
+}
+
+/* expenses statistics */
+
+.stats td {
+    padding-left: 15px;
+    text-align: right;
+}
+
+.stats th {
+    font-weight: normal;
+    border-bottom: 2px solid black;
+}
+
+.stats tr.results td {
+    font-weight: bold;
+    border-top: 2px solid black;
+}
+
+.stats tr.results td:first-child {
+    font-weight: normal;
+}
+
+.stats td:first-child, .stats th:first-child {
+    border-right: 2px solid black;
+}
+
+.stats td:last-child, .stats th:last-child {
+    border-left: 2px solid black;
+}
+
+.stats td:last-child {
+    font-weight: bold;
+}
+
+.stats tr.future td {
+    color: lightgray;
+}
+
+#tooltip {
+    position: absolute;
+    background: #eee;
+    padding: 6px;
+    border: 1px solid grey;
+}
+
+#tooltip table td {
+    border: 0 none;
+    padding: 1px 3px;
+    text-align: left;
+}
+
+#tooltip table td:first-child {
+    text-align: right;
+    font-weight: bold;
+}
+
+.navigation a {
+    font-size: 200%;
+    margin-right: 15px;
+}
+
+/* add expense */
+
+h2.topright {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    height: 30px;
+    margin: 0;
+    padding: 0 6px;
+    background-color: #359AFF;
+    color: #fff;
+    border-top-left-radius: 10px;
+    font-size: 24px;
+    -webkit-transform: rotate(-90deg);
+    -webkit-transform-origin: right bottom;
+}
+
+#status > p {
+    margin: 0;
+    padding: 7px;
+}
+
+#status .success {
+    color: #5CAD5C;
+    background: #E0F7DF;
+}
+
+#status .failure {
+    color: #CF6661;
+    background: #FFDDDB;
+}

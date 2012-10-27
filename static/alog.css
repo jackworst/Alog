@@ -1,0 +1,81 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.main {
+	padding: 8px;
+}
+
+.clearDiv {
+	clear: both;
+}
+
+.consumption {
+	float: left;
+	border: 1px solid black;
+	width: 20px;
+	height: 20px;
+	padding: 3px;
+	float: left;
+	margin: 0 10px 10px 0;
+	border-radius: 3px;
+}
+
+.total {
+	float: left;
+	height: 22px;
+	padding: 3px;
+	float: left;
+}
+
+.consumeBtns {
+	margin-top: 30px;
+}
+
+.consumeBtn {
+	float: left;
+	border: 1px solid #666;
+	width: 20px;
+	height: 20px;
+	padding: 10px;
+	text-align: center;
+	margin-right: 10px;
+	user-select: none;
+	-webkit-user-select: none;
+	cursor: pointer;
+	border-radius: 5px;
+	box-shadow: 0 0 5px #888;
+}
+
+.consumeBtn.ok, .consumption.ok {
+	background: #82FA58;
+}
+
+.consumeBtn.warn1, .consumption.warn1 {
+	background: #F4FA58;
+}
+
+.consumeBtn.warn2, .consumption.warn2 {
+	background: #FAAC58;
+}
+
+.consumeBtn.critical, .consumption.critical {
+	background: #FA5858;
+}
+
+.main.ok {
+	background: #BCF5A9;
+}
+
+.main.warn1 {
+	background: #F2F5A9;
+}
+
+.main.warn2 {
+	background: #F5D0A9;
+}
+
+.main.critical {
+	background: #F5A9A9;
+}

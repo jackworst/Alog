@@ -59,7 +59,7 @@ var handleAdd = function(request, response) {
                 consumption.eid = data.eid
                 consumption.quantity = parseFloat(data.quantity);
                 consumption.date = parseInt(data.date, 10);
-                consumption.addTs = new Date().getTime();
+                consumption.addTs = Math.floor(new Date().getTime() / 1000);
 
                 consumptions.insert(consumption, {safe: true}, function(err, docs) {
                     if (!err) {
@@ -87,10 +87,20 @@ var handleUpdate = function(request, response) {
 };
 
 var handleDelete = function(request, response) {
+    var reqUrl = url.parse(request.url, true);
+    var eid = deleteRe.exec(reqUrl.pathname)[1];
     form.onData(request, function(data) {
         if (checkAuthToken(data.token)) {
             console.log("delete");
-            sendResponse(response, {deleted:true});
+            withAlogDb(function(consumptions) {
+                consumptions.remove({eid: eid}, function(err) {
+                    if (!err) {
+                        sendResponse(response, {ok: true});
+                    } else {
+                        sendResponse(response, {ok: false, error: err});
+                    }
+                });
+            });
         } else {
             sendError(response, 403, "ACCESS DENIED");
         }
@@ -119,8 +129,8 @@ var handleQuery = function(request, response) {
 
 var staticRe = /^\/static\/([\w_\-\.]+)$/;
 var alkRe = /^\/alk\/?$/;
-var updateRe = /^\/alk\/[a-z0-9]{16}\/?$/;
-var deleteRe = /^\/alk\/[a-z0-9]{16}\/del\/?$/;
+var updateRe = /^\/alk\/([a-z0-9_]+)\/?$/;
+var deleteRe = /^\/alk\/([a-z0-9_]+)\/del\/?$/;
 
 http.createServer(function (request, response) {
     var reqUrl = url.parse(request.url);

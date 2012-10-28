@@ -106,7 +106,7 @@ var handleQuery = function(request, response) {
         withAlogDb(function(consumptions) {
                 consumptions.find({date:{$gte: from, $lt: to}}).toArray(function(err, docs) {
                     if (!err) {
-                        sendResponse(response, {ok: true, from:from, to:to, alkData: docs});
+                        sendResponse(response, {ok: true, alkData: docs});
                     } else {
                         sendResponse(response, {ok: false, error: err});
                     }

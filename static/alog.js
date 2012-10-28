@@ -24,6 +24,7 @@
 			quantity: quantity,
 			date: new Date().getTime()
 		};
+        busyConsuming($(".consumeBtns").children(":last"));
         $.post("/alk", $.extend({token: localStorage.token}, consumption), function(response) {
             if (response.ok) {
         		loadAlkData(refresh);
@@ -53,7 +54,12 @@
 			return "critical";
 		}
 	};
-	
+
+    var busyConsuming = function(el) {
+        var indicator = $('<img src="/static/ajax-loader.gif" class="busyConsuming"/>')
+        el.after(indicator);
+    };
+
 	var renderConsumptions = function() {
 		var consumptionsDiv = $('<div class="consumptions"/>');
 	
@@ -74,10 +80,13 @@
 	
 	var renderConsumeBtns = function() {
 		var total = getTotalQuantity();
-		var btn05 = $('<div class="consumeBtn consume05"/>').text("0.5").addClass(mapQuantityToClass(total + 0.5));
-		var btn03 = $('<div class="consumeBtn consume03"/>').text("0.3").addClass(mapQuantityToClass(total + 0.3));
-		var btnAny = $('<div class="consumeBtn consumeAny"/>').text("...").addClass(mapQuantityToClass(total + 0.5));
-		var quantity = $('<input type="text" class="quantity any"/>').text("0.5").hide();
+		var btn05 = $('<div class="consumeBtn consume05"/>').text("0.5");
+        btn05.addClass(mapQuantityToClass(total + 0.5));
+		var btn03 = $('<div class="consumeBtn consume03"/>').text("0.3");
+        btn03.addClass(mapQuantityToClass(total + 0.3));
+		var btnAny = $('<div class="consumeBtn consumeAny"/>').text("...");
+        btnAny.addClass(mapQuantityToClass(total + 0.5));
+		var quantity = $('<input type="number" class="quantity any"/>').text("0.5").hide();
 		var ok = $('<button class="okBtn any"/>').text("ok").hide();
 		var cancel = $('<button class="cancelBtn any"/>').text("X").hide();
 		var consumeBtns = $('<div class="consumeBtns"/>');
@@ -103,6 +112,7 @@
 		});
 		$(".consumeBtn.consumeAny", mainDiv).click(function() {
 			var btns = $(this).closest(".consumeBtns");
+            btns.addClass("modeAny");
 			$(".consumeBtn", btns).hide();
 			$(".any", btns).show();
 			return false;
@@ -114,6 +124,7 @@
 		});
 		$(".consumeBtns .cancelBtn", mainDiv).click(function() {
 			var btns = $(this).closest(".consumeBtns");
+            btns.removeClass("modeAny");
 			$(".consumeBtn", btns).show();
 			$(".any", btns).hide();
 			return false;

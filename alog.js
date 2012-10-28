@@ -117,7 +117,7 @@ var handleQuery = function(request, response) {
     }
 };
 
-var staticRe = /^\/static\/([\w\.]+)$/;
+var staticRe = /^\/static\/([\w_\-\.]+)$/;
 var alkRe = /^\/alk\/?$/;
 var updateRe = /^\/alk\/[a-z0-9]{16}\/?$/;
 var deleteRe = /^\/alk\/[a-z0-9]{16}\/del\/?$/;

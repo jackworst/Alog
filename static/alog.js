@@ -15,7 +15,7 @@
                 alkData = response.alkData;
     		    cb();            
             }
-        );
+        ).error(handleAuthError);
     };
 
 	var consume = function(quantity) {
@@ -31,7 +31,7 @@
             } else {
                 alert("error: " + JSON.stringify(response));
             }
-        });
+        }).error(handleAuthError);
 	};
 	
 	var getTotalQuantity = function() {
@@ -42,6 +42,14 @@
 		
 		return total;
 	};
+
+    var handleAuthError = function(jqXHR, textStatus) {
+        if (jqXHR.status === 403) {
+            window.location = "/static/token.html";
+        } else {
+            alert(textStatus);
+        }
+    };
 	
 	var mapQuantityToClass = function(quantity) {
 		if (quantity <= 1.5) {

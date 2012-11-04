@@ -33,6 +33,18 @@ var checkAuthToken = function(token) {
     return token === config.token;
 };
 
+var query = function(from, to, response, cb) {
+        withAlogDb(function(consumptions) {
+                consumptions.find({date:{$gte: from, $lt: to}}).toArray(function(err, docs) {
+                    if (!err) {
+                        cb(docs);
+                    } else {
+                        sendResponse(response, {ok: false, error: err});
+                    }
+                });
+        });
+};
+
 var handleStatic = function(request, response, resource) {
     console.log("serving " + resource);
     fs.readFile("./static/" + resource, function (err, data) {
@@ -60,10 +72,18 @@ var handleAdd = function(request, response) {
                 consumption.quantity = parseFloat(data.quantity);
                 consumption.date = parseInt(data.date, 10);
                 consumption.addTs = Math.floor(new Date().getTime() / 1000);
+                var from = parseInt(data.from, 10);
+                var to = parseInt(data.to, 10);
 
                 consumptions.insert(consumption, {safe: true}, function(err, docs) {
                     if (!err) {
-                        sendResponse(response, {ok: true, eid: consumption.eid});
+                        if (from && to) {
+                            query(from, to, response, function(docs) {
+                                sendResponse(response, {ok: true, newEid: consumption.eid, alkData: docs});
+                            });
+                        } else {
+                            sendResponse(response, {ok: true, newEid: consumption.eid});
+                        }
                     } else {
                         sendResponse(response, {ok: false, error: err});
                     }
@@ -76,6 +96,7 @@ var handleAdd = function(request, response) {
 };
 
 var handleUpdate = function(request, response) {
+    //TODO: to be implemented
     form.onData(request, function(data) {
         if (checkAuthToken(data.token)) {
             console.log("update");
@@ -113,14 +134,8 @@ var handleQuery = function(request, response) {
         var from = parseInt(reqUrl.query.from, 10);
         var to = parseInt(reqUrl.query.to, 10);
         console.log("query");
-        withAlogDb(function(consumptions) {
-                consumptions.find({date:{$gte: from, $lt: to}}).toArray(function(err, docs) {
-                    if (!err) {
-                        sendResponse(response, {ok: true, alkData: docs});
-                    } else {
-                        sendResponse(response, {ok: false, error: err});
-                    }
-                });
+        query(from, to, response, function(docs) {
+            sendResponse(response, {ok: true, alkData: docs});
         });
     } else {
         sendError(response, 403, "ACCESS DENIED");

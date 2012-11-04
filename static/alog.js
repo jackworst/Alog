@@ -23,15 +23,22 @@
     };
 
 	var consume = function(quantity) {
+        var now = new Date();
 		var consumption = {
 			eid: ts(new Date()) + "_" + Math.floor(Math.random() * 1000000),
 			quantity: quantity,
 			date: ts(new Date())
 		};
         busyConsuming($(".consumeBtns").children(":last"));
-        $.post("/alk", $.extend({token: localStorage.token}, consumption), function(response) {
+        var data = {
+            token: localStorage.token,
+            from: ts(mkSlot(now, now.getHours() >= 12 ? 0 : -1)),
+            to: ts(mkSlot(now, now.getHours() >= 12 ? 1 : 0))
+        };
+        $.post("/alk", $.extend(data, consumption), function(response) {
             if (response.ok) {
-        		loadAlkData(refresh);
+                alkData = response.alkData;
+        		refresh();
             } else {
                 alert("error: " + JSON.stringify(response));
             }

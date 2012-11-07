@@ -62,7 +62,6 @@ var handleStatic = function(request, response, resource) {
 };
 
 var handleAdd = function(request, response) {
-    console.log("add0");
     form.onData(request, function(data) {
         if (checkAuthToken(data.token)) {
             console.log("add");

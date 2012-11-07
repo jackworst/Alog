@@ -19,6 +19,7 @@ body {
 	padding: 3px;
 	float: left;
 	margin: 0 10px 10px 0;
+    text-align: center;
 	border-radius: 3px;
 }
 
@@ -87,4 +88,20 @@ body {
 
 .main.critical {
 	background: #F5A9A9;
+}
+
+.consumption.unsynced {
+    opacity: 0.3;
+}
+
+.consumption.unknown {
+    background: #DDD;
+}
+
+.editArea a {
+    margin-left: 8px;
+}
+
+.consumptionItem.unsynced .label {
+    color: grey;
 }

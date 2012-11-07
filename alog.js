@@ -6,9 +6,6 @@ var config = require("./config").config;
 var db = new mongo.Db("local", new mongo.Server("127.0.0.1", 27017, {}));
 
 var dbClient;
-db.open(function(err, client) {
-    dbClient = client;
-});
 
 var withAlogDb = function(cb) {
     dbClient.collection("consumptions", function(err, consumptions) {
@@ -18,6 +15,14 @@ var withAlogDb = function(cb) {
         cb(consumptions);
     });
 };
+
+db.open(function(err, client) {
+    dbClient = client;
+    withAlogDb(function(consumptions) {
+        consumptions.ensureIndex({eid:1}, {unique:true}, function(err, index) {
+        });
+    });
+});
 
 var sendResponse = function(response, data) {
     response.writeHead(200, {"Content-Type": "application/json"});

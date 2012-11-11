@@ -200,18 +200,19 @@
         if (total > 0) {
             consumptionsDiv.append($('<div class="total"/>').text(" = " + total.toFixed(1)));
         }
-        var showEditLink = total > 0;
-        var showSyncLink = serverAlkDataUnknown || hasSyncPending;
-        if (showEditLink || showSyncLink) {
-            var editArea = $('<div class="editArea"/>');
-            if(showEditLink) {
-                editArea.append($('<a class="edit"  href="#"/>').text("edit"));
-            }
-            if(showSyncLink) {
-                editArea.append($('<a class="sync"  href="#"/>').text("retry"));
-            }
-            consumptionsDiv.append(editArea);
+
+        if (total <= 0 && !serverAlkDataUnknown) {
+            var none = $('<div class="noConsumptions"/>').text("No consumptions today");
+            consumptionsDiv.append(none);
         }
+
+        var showSyncLink = serverAlkDataUnknown || hasSyncPending;
+        var editArea = $('<div class="editArea"/>');
+        editArea.append($('<a class="edit"  href="#"/>').text("edit"));
+        if(showSyncLink) {
+            editArea.append($('<a class="sync"  href="#"/>').text("retry"));
+        }
+        consumptionsDiv.append(editArea);
         
         return consumptionsDiv;
     };

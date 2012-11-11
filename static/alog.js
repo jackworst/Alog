@@ -14,11 +14,22 @@
         return new Date(now.getFullYear(), now.getMonth(), now.getDate() + delta, 12, 0, 0);
     };
 
+    var slotStart = function(date) {
+        return mkSlot(date, date.getHours() >= 12 ? 0 : -1);
+    };
+
+    var slotEnd = function(date) {
+        return mkSlot(date, date.getHours() >= 12 ? 1 : 0);
+    };
+
     var initAlkData = function(newServerAlkData) {
         serverAlkData = newServerAlkData || [];
         serverAlkDataUnknown = !newServerAlkData;
         var localAlkData = JSON.parse(localStorage.alkData || "[]");
         alkData = serverAlkData.concat(localAlkData);
+        alkData.sort(function(a, b) {
+            return a.date - b.date;
+        });
     };
 
     var loadAlkData = function(loadAll, cb) {
@@ -29,8 +40,8 @@
             rangeParams = {all : true};
         } else {
             rangeParams = {
-                from: ts(mkSlot(now, now.getHours() >= 12 ? 0 : -1)),
-                to: ts(mkSlot(now, now.getHours() >= 12 ? 1 : 0))
+                from: ts(slotStart(now)),
+                to: ts(slotEnd(now))
             };
         }
         $.get("/alk", $.extend({token: localStorage.token}, rangeParams), function(response) {
@@ -64,8 +75,8 @@
         var consumptions = JSON.parse(localStorage.alkData || "[]");
         var data = {
             token: localStorage.token,
-            from: ts(mkSlot(now, now.getHours() >= 12 ? 0 : -1)),
-            to: ts(mkSlot(now, now.getHours() >= 12 ? 1 : 0))
+            from: ts(slotStart(now)),
+            to: ts(slotEnd(now))
         };
         var todo = consumptions.length;
         busyConsuming($(".consumeBtns").children(":last"));
@@ -269,26 +280,52 @@
         $(container).empty().append(mainDiv);
     };
 
+    var fmt2 = function(n) {
+        return n < 10 ? "0" + n : "" + n;
+    };
+
+    var formatTime = function(date) {
+        return fmt2(date.getHours()) + ":" + fmt2(date.getMinutes());
+    };
+
+    var weekDays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    var formatDate = function(date) {
+        return weekDays[date.getDay()] + " " + fmt2(date.getDate()) + "." + fmt2(date.getMonth() + 1) + "." + date.getFullYear();
+    };
+
     var renderConsumptionsList = function() {
         //FIXME: use better css class names or differentiate over parent class
-        var consumptionsUl = $('<ul class="consumptionsList"/>');
+        var consumptionsDiv = $('<div/>');
 
-        $.each(alkData, function(i, consumption) {
-            var alkLi = $('<li class="consumptionItem"/>');
-            var label = new Date(consumption.date * 1000) + " " + consumption.quantity.toFixed(1);
-            alkLi.append($('<span class="label"/>').text(label));
-            alkLi.append($('<span/>').text(" "));
-            alkLi.append($('<a href="#" class="delete"/>').text("del").attr("data-eid", consumption.eid));
-            if (consumption.syncPending) {
-                alkLi.addClass("unsynced");
-            }
-            consumptionsUl.append(alkLi);
-        });
-        var allLi = $('<li/>');
-        allLi.append($('<a href="#" class="showHideAll"/>').text(allAlkData ? "hide all" : "show all"));
-        consumptionsUl.append(allLi);
+        var consumptionsUl;
+        var currentSlot;
+        if (alkData.length > 0) {
+            $.each(alkData.slice(0).reverse(), function(i, consumption) {
+                var consumptionSlot = slotStart(new Date(consumption.date * 1000));
+                if (!currentSlot || currentSlot.getTime() !== consumptionSlot.getTime()) {
+                    currentSlot = consumptionSlot;
+                    consumptionsDiv.append($('<p/>').text(formatDate(currentSlot)));
+                    consumptionsUl = $('<ul class="consumptionsList"/>')
+                    consumptionsDiv.append(consumptionsUl);
+                }
+                var alkLi = $('<li class="consumptionItem"/>');
+                var label = formatTime(new Date(consumption.date * 1000)) + " - " + consumption.quantity.toFixed(1);
+                alkLi.append($('<span class="label"/>').text(label));
+                alkLi.append($('<span/>').text(" "));
+                alkLi.append($('<a href="#" class="delete"/>').text("del").attr("data-eid", consumption.eid));
+                if (consumption.syncPending) {
+                    alkLi.addClass("unsynced");
+                }
+                consumptionsUl.append(alkLi);
+            });
+        } else if (!allAlkData) {
+            consumptionsDiv.append($('<p/>').text("No consumptions today"));
+        }
+        var showHideText = allAlkData ? "show today" : "show all";
+        var showHideAll = $('<p/>').append($('<a href="#" class="showHideAll"/>').text(showHideText));
+        consumptionsDiv.append(showHideAll);
         
-        return consumptionsUl;
+        return consumptionsDiv;
     };
 
     var renderEditUI = function(container) {

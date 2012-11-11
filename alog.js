@@ -38,16 +38,24 @@ var checkAuthToken = function(token) {
     return token === config.token;
 };
 
-var query = function(from, to, response, cb) {
-        withAlogDb(function(consumptions) {
-                consumptions.find({date:{$gte: from, $lt: to}}).toArray(function(err, docs) {
-                    if (!err) {
-                        cb(docs);
-                    } else {
-                        sendResponse(response, {ok: false, error: err});
-                    }
-                });
+var queryRange = function(from, to, response, cb) {
+    queryByCriteria({date:{$gte: from, $lt: to}}, response, cb);
+};
+
+var queryAll = function(from, to, response, cb) {
+    queryByCriteria({}, response, cb);
+};
+
+var queryByCriteria = function(criteria, response, cb) {
+    withAlogDb(function(consumptions) {
+        consumptions.find(criteria).toArray(function(err, docs) {
+            if (!err) {
+                cb(docs);
+            } else {
+                sendResponse(response, {ok: false, error: err});
+            }
         });
+    });
 };
 
 var handleStatic = function(request, response, resource) {
@@ -82,7 +90,7 @@ var handleAdd = function(request, response) {
                 consumptions.insert(consumption, {safe: true}, function(err, docs) {
                     if (!err) {
                         if (from && to) {
-                            query(from, to, response, function(docs) {
+                            queryRange(from, to, response, function(docs) {
                                 sendResponse(response, {ok: true, newEid: consumption.eid, alkData: docs});
                             });
                         } else {
@@ -135,12 +143,21 @@ var handleDelete = function(request, response) {
 var handleQuery = function(request, response) {
     var reqUrl = url.parse(request.url, true);
     if (checkAuthToken(reqUrl.query.token)) {
+        var all = "true" === reqUrl.query.all;
         var from = parseInt(reqUrl.query.from, 10);
         var to = parseInt(reqUrl.query.to, 10);
         console.log("query");
-        query(from, to, response, function(docs) {
-            sendResponse(response, {ok: true, alkData: docs});
-        });
+        if (all) {
+            queryAll(response, function(docs) {
+                sendResponse(response, {ok: true, alkData: docs});
+            });
+        } else if (from && to) {
+            queryRange(from, to, response, function(docs) {
+                sendResponse(response, {ok: true, alkData: docs});
+            });
+        } else {
+            sendError(response, 400, "BAD QUERY PARAMS");
+        }
     } else {
         sendError(response, 403, "ACCESS DENIED");
     }

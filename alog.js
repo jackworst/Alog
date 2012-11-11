@@ -42,7 +42,7 @@ var queryRange = function(from, to, response, cb) {
     queryByCriteria({date:{$gte: from, $lt: to}}, response, cb);
 };
 
-var queryAll = function(from, to, response, cb) {
+var queryAll = function(response, cb) {
     queryByCriteria({}, response, cb);
 };
 

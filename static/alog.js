@@ -4,6 +4,7 @@
     var serverAlkData = [];
     var serverAlkDataUnknown = false;
     var alkData = [];
+    var allAlkData = false;
     
     var ts = function(date) {
         return Math.floor(date.getTime() / 1000);
@@ -20,17 +21,22 @@
         alkData = serverAlkData.concat(localAlkData);
     };
 
-    var loadAlkData = function(cb) {
+    var loadAlkData = function(loadAll, cb) {
+        allAlkData = loadAll;
         var now = new Date();
-        $.get("/alk", {
-                token: localStorage.token,
+        var rangeParams;
+        if (allAlkData)  {
+            rangeParams = {all : true};
+        } else {
+            rangeParams = {
                 from: ts(mkSlot(now, now.getHours() >= 12 ? 0 : -1)),
                 to: ts(mkSlot(now, now.getHours() >= 12 ? 1 : 0))
-            }, function(response) {
-                initAlkData(response.alkData);
-                cb();
-            }
-        ).error(function(jqXHR, textStatus) {
+            };
+        }
+        $.get("/alk", $.extend({token: localStorage.token}, rangeParams), function(response) {
+            initAlkData(response.alkData);
+            cb();
+        }).error(function(jqXHR, textStatus) {
             initAlkData(undefined);
             cb();
         });
@@ -91,7 +97,7 @@
             });
         } else {
             // no sync pending:just refresh serverAlkData
-            loadAlkData(refresh);
+            loadAlkData(allAlkData, refresh);
         }
     };
 
@@ -117,7 +123,7 @@
             // if the consumption is on server, remove it there and refresh state from server
             $.post("/alk/" + encodeURIComponent(eid) + "/del", {token: localStorage.token}, function(response) {
                 if (response.ok) {
-                    loadAlkData(refresh);
+                    loadAlkData(allAlkData, refresh);
                 } else {
                     alert("error: " + JSON.stringify(response));
                 }
@@ -278,6 +284,9 @@
             }
             consumptionsUl.append(alkLi);
         });
+        var allLi = $('<li/>');
+        allLi.append($('<a href="#" class="showHideAll"/>').text(allAlkData ? "hide all" : "show all"));
+        consumptionsUl.append(allLi);
         
         return consumptionsUl;
     };
@@ -290,13 +299,22 @@
 
         $(".back", mainDiv).click(function() {
             mode = "consume";
-            refresh();
+            if (allAlkData) {
+                loadAlkData(false, refresh);
+            } else {
+                refresh();
+            }
             return false;
         });
 
         $(".delete", mainDiv).click(function() {
             var eid = $(this).attr("data-eid");
             deleteConsumption(eid);
+            return false;
+        });
+
+        $(".showHideAll", mainDiv).click(function() {
+            loadAlkData(!allAlkData, refresh);
             return false;
         });
         
@@ -318,7 +336,7 @@
             error: handleAuthError
         });
         mode = "consume";
-        loadAlkData(refresh);
+        loadAlkData(false, refresh);
     });
 })(jQuery);
 

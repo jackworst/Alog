@@ -53,7 +53,7 @@
         });
     };
 
-    var consume = function(quantity) {
+    var consume = function(quantity, busyCb) {
         var now = new Date();
         var consumption = {
             eid: ts(new Date()) + "_" + Math.floor(Math.random() * 1000000),
@@ -67,44 +67,36 @@
         localStorage.alkData = JSON.stringify(localAlkData);
         initAlkData(serverAlkDataUnknown ? undefined : serverAlkData);
 
-        sync();
+        sync(busyCb);
     };
 
-    var sync = function() {
+    var sync = function(busyCb) {
         var now = new Date();
         var consumptions = JSON.parse(localStorage.alkData || "[]");
         var data = {
             token: localStorage.token,
             from: ts(slotStart(now)),
-            to: ts(slotEnd(now))
+            to: ts(slotEnd(now)),
+            consumptions: JSON.stringify(consumptions)
         };
-        var todo = consumptions.length;
-        busyConsuming($(".consumeBtns").children(":last"));
-        if (todo > 0) {
+        busyCb();
+        if (consumptions.length > 0) {
             // sync pending: do sync (and thus implicitly refresh serverAlkData)
-            $.each(consumptions, function(i, consumption) {
-                $.post("/alk", $.extend({}, data, consumption), function(response) {
-                    if (response.ok) {
-                        var localAlkData = JSON.parse(localStorage.alkData || "[]");
-                        localAlkData = $.map(localAlkData, function(cons) {
-                            return cons.eid === consumption.eid ? null : cons;
-                        });
-                        localStorage.alkData = JSON.stringify(localAlkData);
-                        initAlkData(response.alkData);
-                    } else {
-                        alert("error: " + JSON.stringify(response));
-                        // or should we still remove the consumption in this case?
-                    }
-                    todo -= 1;
-                    if (todo === 0) {
-                        refresh();
-                    }
-                }).error(function(jqXHR, textStatus) {
-                    todo -= 1;
-                    if (todo === 0) {
-                        refresh();
-                    }
-                });
+            $.post("/alk", data, function(response) {
+                if (response.ok) {
+                    var localAlkData = JSON.parse(localStorage.alkData || "[]");
+                    localAlkData = $.map(localAlkData, function(cons) {
+                        return $.inArray(cons.eid, response.newEids) >= 0 ? null : cons;
+                    });
+                    localStorage.alkData = JSON.stringify(localAlkData);
+                    initAlkData(response.alkData);
+                } else {
+                    alert("error: " + JSON.stringify(response));
+                    // or should we still remove the consumption in this case?
+                }
+                refresh();
+            }).error(function(jqXHR, textStatus) {
+                refresh();
             });
         } else {
             // no sync pending:just refresh serverAlkData
@@ -171,9 +163,9 @@
         }
     };
 
-    var busyConsuming = function(el) {
+    var busyConsuming = function() {
         var indicator = $('<img src="/static/ajax-loader.gif" class="busyConsuming"/>')
-        el.after(indicator);
+        $(".consumeBtns").children(":last").after(indicator);
     };
 
     var renderConsumptions = function() {
@@ -235,6 +227,8 @@
     };
     
     var renderConsumeUI = function(container) {
+        var locked = false;
+    
         var mainDiv = $('<div class="main"/>');
         mainDiv.addClass(mapQuantityToClass(getTotalQuantity()));
         
@@ -242,40 +236,60 @@
         mainDiv.append(renderConsumeBtns()).append('<div class="clearDiv"/>');
         
         $(".consumeBtn.consume05", mainDiv).click(function() {
-            consume(0.5);
+            if (!locked) {
+                locked = true;
+                consume(0.5, busyConsuming);
+            }
             return false;
         });
         $(".consumeBtn.consume03", mainDiv).click(function() {
-            consume(0.3);
+            if (!locked) {
+                locked = true;
+                consume(0.3, busyConsuming);
+            }
             return false;
         });
         $(".consumeBtn.consumeAny", mainDiv).click(function() {
-            var btns = $(this).closest(".consumeBtns");
-            btns.addClass("modeAny");
-            $(".consumeBtn", btns).hide();
-            $(".any", btns).show();
+            if (!locked) {
+                var btns = $(this).closest(".consumeBtns");
+                btns.addClass("modeAny");
+                $(".consumeBtn", btns).hide();
+                $(".any", btns).show();
+            }
             return false;
         });
         $(".consumeBtns .okBtn", mainDiv).click(function() {
-            var btns = $(this).closest(".consumeBtns");
-            consume(parseFloat($(".quantity" ,btns).val()));
+            if (!locked) {
+                locked = true;
+                var btns = $(this).closest(".consumeBtns");
+                consume(parseFloat($(".quantity" ,btns).val()), busyConsuming);
+            }
             return false;
         });
         $(".consumeBtns .cancelBtn", mainDiv).click(function() {
-            var btns = $(this).closest(".consumeBtns");
-            btns.removeClass("modeAny");
-            $(".consumeBtn", btns).show();
-            $(".any", btns).hide();
+            if (!locked) {
+                var btns = $(this).closest(".consumeBtns");
+                btns.removeClass("modeAny");
+                $(".consumeBtn", btns).show();
+                $(".any", btns).hide();
+            }
             return false;
         });
 
         $(".consumptions .edit", mainDiv).click(function() {
-            mode = "edit";
-            refresh();
+            if (!locked) {
+                locked = true;
+                mode = "edit";
+                refresh();
+            }
             return false;
         });
         $(".consumptions .sync", mainDiv).click(function() {
-            sync();
+            if (!locked) {
+                locked = true;
+                sync(busyConsuming);
+            }
+            return false;
         });
         
         $(container).empty().append(mainDiv);

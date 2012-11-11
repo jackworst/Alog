@@ -74,27 +74,42 @@ var handleStatic = function(request, response, resource) {
     });
 };
 
+var sanitizeConsumption = function(newConsumption) {
+    var consumption = {};
+    consumption.eid = "" + newConsumption.eid;
+    consumption.quantity = parseFloat("" + newConsumption.quantity);
+    consumption.date = parseInt("" + newConsumption.date, 10);
+    consumption.addTs = Math.floor(new Date().getTime() / 1000);
+    return consumption;
+};
+
 var handleAdd = function(request, response) {
     form.onData(request, function(data) {
         if (checkAuthToken(data.token)) {
             console.log("add");
             withAlogDb(function(consumptions) {
-                var consumption = {};
-                consumption.eid = data.eid
-                consumption.quantity = parseFloat(data.quantity);
-                consumption.date = parseInt(data.date, 10);
-                consumption.addTs = Math.floor(new Date().getTime() / 1000);
+                var newConsumptions = JSON.parse(data.consumptions);
                 var from = parseInt(data.from, 10);
                 var to = parseInt(data.to, 10);
 
-                consumptions.insert(consumption, {safe: true}, function(err, docs) {
+                // FIXME: we should also validate the consumption and return an error if any is invalid
+                var sanitizedConsumptions = [];
+                for (var i = 0; i < newConsumptions.length; i++) {
+                    sanitizedConsumptions.push(sanitizeConsumption(newConsumptions[i]));
+                }
+                var newEids = sanitizedConsumptions.map(function(consumption) {
+                    return consumption.eid;
+                });
+
+                consumptions.insert(sanitizedConsumptions, {safe: true}, function(err, docs) {
                     if (!err) {
+                        console.log("added", newEids.join(", "));
                         if (from && to) {
                             queryRange(from, to, response, function(docs) {
-                                sendResponse(response, {ok: true, newEid: consumption.eid, alkData: docs});
+                                sendResponse(response, {ok: true, newEids: newEids, alkData: docs});
                             });
                         } else {
-                            sendResponse(response, {ok: true, newEid: consumption.eid});
+                            sendResponse(response, {ok: true, newEids: newEids});
                         }
                     } else {
                         sendResponse(response, {ok: false, error: err});
@@ -108,11 +123,11 @@ var handleAdd = function(request, response) {
 };
 
 var handleUpdate = function(request, response) {
-    //TODO: to be implemented
     form.onData(request, function(data) {
         if (checkAuthToken(data.token)) {
             console.log("update");
-            sendResponse(response, {updated:true});
+            //TODO: to be implemented
+            sendResponse(response, {ok: false});
         } else {
             sendError(response, 403, "ACCESS DENIED");
         }
@@ -128,6 +143,7 @@ var handleDelete = function(request, response) {
             withAlogDb(function(consumptions) {
                 consumptions.remove({eid: eid}, function(err) {
                     if (!err) {
+                        console.log("deleted", eid);
                         sendResponse(response, {ok: true});
                     } else {
                         sendResponse(response, {ok: false, error: err});

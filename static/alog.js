@@ -314,12 +314,17 @@
 
         var consumptionsUl;
         var currentSlot;
+        var slotHead;
+        var slotQuantity = 0;
         if (alkData.length > 0) {
             $.each(alkData.slice(0).reverse(), function(i, consumption) {
                 var consumptionSlot = slotStart(new Date(consumption.date * 1000));
                 if (!currentSlot || currentSlot.getTime() !== consumptionSlot.getTime()) {
                     currentSlot = consumptionSlot;
-                    consumptionsDiv.append($('<p/>').text(formatDate(currentSlot)));
+                    slotHead = $('<p class="slotHead"/>');
+                    slotHead.append($('<span/>').text(formatDate(currentSlot) + " - "));
+                    slotHead.append($('<span class="slotQuantity"/>'));
+                    consumptionsDiv.append(slotHead);
                     consumptionsUl = $('<ul class="consumptionsList"/>')
                     consumptionsDiv.append(consumptionsUl);
                 }
@@ -332,6 +337,8 @@
                     alkLi.addClass("unsynced");
                 }
                 consumptionsUl.append(alkLi);
+                slotQuantity += consumption.quantity;
+                $(".slotQuantity", slotHead).text(slotQuantity.toFixed(1))
             });
         } else if (!allAlkData) {
             consumptionsDiv.append($('<p/>').text("No consumptions today"));

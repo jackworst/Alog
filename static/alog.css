@@ -109,3 +109,7 @@ body {
 .consumptionItem.unsynced .label {
     color: grey;
 }
+
+.slotHead {
+    font-weight: bold;
+}

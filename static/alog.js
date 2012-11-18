@@ -321,6 +321,7 @@
                 var consumptionSlot = slotStart(new Date(consumption.date * 1000));
                 if (!currentSlot || currentSlot.getTime() !== consumptionSlot.getTime()) {
                     currentSlot = consumptionSlot;
+                    slotQuantity = 0;
                     slotHead = $('<p class="slotHead"/>');
                     slotHead.append($('<span/>').text(formatDate(currentSlot) + " - "));
                     slotHead.append($('<span class="slotQuantity"/>'));

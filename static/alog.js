@@ -53,12 +53,18 @@
         });
     };
 
-    var consume = function(quantity, busyCb) {
+    var consume = function(quantity, comment, busyCb) {
+        if (getTotalQuantity() + quantity > 1.5 && !comment) {
+            alert("orly? r u sure? add a comment or let it be!");
+            refresh();
+            return;
+        }
         var now = new Date();
         var consumption = {
             eid: ts(new Date()) + "_" + Math.floor(Math.random() * 1000000),
             quantity: quantity,
             date: ts(new Date()),
+            comment: (comment || "").trim(),
             syncPending: true
         };
 
@@ -220,8 +226,9 @@
         var quantity = $('<input type="number" class="quantity any"/>').text("0.5").hide();
         var ok = $('<button class="okBtn any"/>').text("ok").hide();
         var cancel = $('<button class="cancelBtn any"/>').text("X").hide();
+        var comment = $('<input type="text" class="comment"/>');
         var consumeBtns = $('<div class="consumeBtns"/>');
-        consumeBtns.append(btn05).append(btn03).append(btnAny).append(quantity).append(ok).append(cancel);
+        consumeBtns.append(btn05).append(btn03).append(btnAny).append(quantity).append(ok).append(cancel).append(comment);
         
         return consumeBtns;
     };
@@ -238,14 +245,14 @@
         $(".consumeBtn.consume05", mainDiv).click(function() {
             if (!locked) {
                 locked = true;
-                consume(0.5, busyConsuming);
+                consume(0.5, $(".comment", mainDiv).val(), busyConsuming);
             }
             return false;
         });
         $(".consumeBtn.consume03", mainDiv).click(function() {
             if (!locked) {
                 locked = true;
-                consume(0.3, busyConsuming);
+                consume(0.3, $(".comment", mainDiv).val(), busyConsuming);
             }
             return false;
         });
@@ -262,7 +269,7 @@
             if (!locked) {
                 locked = true;
                 var btns = $(this).closest(".consumeBtns");
-                consume(parseFloat($(".quantity" ,btns).val()), busyConsuming);
+                consume(parseFloat($(".quantity" ,btns).val()), $(".comment", mainDiv).val(), busyConsuming);
             }
             return false;
         });
@@ -334,6 +341,10 @@
                 alkLi.append($('<span class="label"/>').text(label));
                 alkLi.append($('<span/>').text(" "));
                 alkLi.append($('<a href="#" class="delete"/>').text("del").attr("data-eid", consumption.eid));
+                if (consumption.comment) {
+                    alkLi.append('<br/>');
+                    alkLi.append($('<span/>').text(consumption.comment));
+                }
                 if (consumption.syncPending) {
                     alkLi.addClass("unsynced");
                 }

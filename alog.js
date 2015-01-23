@@ -78,6 +78,7 @@ var sanitizeConsumption = function(newConsumption) {
     var consumption = {};
     consumption.eid = "" + newConsumption.eid;
     consumption.quantity = parseFloat("" + newConsumption.quantity);
+    consumption.comment = (newConsumption.comment || "").trim();
     consumption.date = parseInt("" + newConsumption.date, 10);
     consumption.addTs = Math.floor(new Date().getTime() / 1000);
     return consumption;
